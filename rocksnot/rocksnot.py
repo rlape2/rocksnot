@@ -115,14 +115,20 @@ class Map(ipyleaflet.Map):
             basemap (str): The name of the basemap to add.
         """
         import xyzservices.providers as xyz
-        try:
-            layer = eval(f"xyz.{basemap}")
-            url = layer.build_url()
-            attribution = layer.attribution
-            self.add_tile_layer(url=url, attribution=attribution, name=basemap)
 
-        except:
-            raise ValueError(f"Invalid basemap name: {basemap}")
+        if basemap.lower() == "hybrid":
+            url = "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}"
+            self.add_tile_layer(url, name=basemap)
+
+        else:
+            try:
+                layer = eval(f"xyz.{basemap}")
+                url = layer.build_url()
+                attribution = layer.attribution
+                self.add_tile_layer(url=url, attribution=attribution, name=basemap)
+
+            except:
+                raise ValueError(f"Invalid basemap name: {basemap}")
     
 
     def add_geojson(self, data, **kwargs):
@@ -139,6 +145,26 @@ class Map(ipyleaflet.Map):
 
         geojson = ipyleaflet.GeoJSON(data=data, **kwargs)
         self.add_layer(geojson)
+
+    def add_shp(self, data, **kwargs):
+        """Adds a Shapefile layer to the map."""
+        import geopandas as gpd
+        import json
+        gdf = gpd.read_file(data)
+        data = json.loads(gdf.to_json())
+        geojson = ipyleaflet.GeoJSON(data=data, **kwargs)
+        self.add_layer(geojson)
+        return geojson
+    
+    def add_vector(self, data, **kwargs):
+        """Adds a Vector layer to the map."""
+        import geopandas as gpd
+        import json
+        gdf = gpd.read_file(data)
+        data = json.loads(gdf.to_json())
+        vector = ipyleaflet.Vector(data=data, **kwargs)
+        self.add_layer(vector)
+        return vector
 
 def generate_random_string(length=10, upper=False, digits=False, punctuation=False):
     """Generates a random string of a given length.
@@ -160,6 +186,7 @@ def generate_random_string(length=10, upper=False, digits=False, punctuation=Fal
         letters += string.punctuation
     result_str = ''.join(random.choice(letters) for i in range(length))
     return result_str
+
 
 
 def generate_lucky_number(length=1):
