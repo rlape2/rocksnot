@@ -3,7 +3,6 @@ import string
 import random
 import ipyleaflet 
 
-
 class Map(ipyleaflet.Map):
     
     def __init__(self, center=(20, 0), zoom=2, **kwargs) -> None:

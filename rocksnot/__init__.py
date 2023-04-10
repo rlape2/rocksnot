@@ -3,3 +3,5 @@
 __author__ = """Robby Lape"""
 __email__ = 'robby.lape@gmail.com'
 __version__ = '0.0.6'
+
+from .rocksnot import *
