@@ -28,10 +28,7 @@ class Map(ipyleaflet.Map):
             self.add_layers_control()
 
     def add_search_control(self, position="topleft", **kwargs):
-        """Adds a search control to the map.
-        Args:
-            kwargs: Keyword arguments to pass to the search control.
-        """
+        """Adds a search control to the map."""
         if "url" not in kwargs:
             kwargs["url"] = 'https://nominatim.openstreetmap.org/search?format=json&q={s}'
     
@@ -40,10 +37,7 @@ class Map(ipyleaflet.Map):
         self.add_control(search_control)
 
     def add_draw_control(self, **kwargs):
-        """Adds a draw control to the map.
-        Args:
-            kwargs: Keyword arguments to pass to the draw control.
-        """
+        """Adds a draw control to the map."""
         draw_control = ipyleaflet.DrawControl(**kwargs)
 
         draw_control.polyline =  {
@@ -83,37 +77,22 @@ class Map(ipyleaflet.Map):
         self.add_control(draw_control)
 
     def add_layers_control(self, position="topright"):
-        """Adds a layers control to the map.
-        Args:
-            kwargs: Keyword arguments to pass to the layers control.
-        """
+        """Adds a layers control to the map."""
         layers_control = ipyleaflet.LayersControl(position=position)
         self.add_control(layers_control)
 
     def add_fullscreen_control(self, position="topleft"):
-        """Adds a fullscreen control to the map.
-        Args:
-            kwargs: Keyword arguments to pass to the fullscreen control.
-        """
+        """Adds a fullscreen control to the map."""
         fullscreen_control = ipyleaflet.FullScreenControl(position=position)
         self.add_control(fullscreen_control)
 
     def add_tile_layer(self, url, name, attribution="", **kwargs):
-        """Adds a tile layer to the map.
-        Args:
-            url (str): The URL template of the tile layer.
-            attribution (str): The attribution of the tile layer.
-            name (str, optional): The name of the tile layer. Defaults to "OpenStreetMap".
-            kwargs: Keyword arguments to pass to the tile layer.
-        """
+        """Adds a tile layer to the map."""
         tile_layer = ipyleaflet.TileLayer(url=url, attribution=attribution, name=name, **kwargs)
         self.add_layer(tile_layer)
 
     def add_basemap(self, basemap):
-        """Adds a basemap to the map.
-        Args:
-            basemap (str): The name of the basemap to add.
-        """
+        """Adds a basemap to the map."""
         import xyzservices.providers as xyz
 
         if basemap.lower() == "hybrid":
@@ -132,11 +111,7 @@ class Map(ipyleaflet.Map):
     
 
     def add_geojson(self, data, **kwargs):
-        """Adds a GeoJSON layer to the map.
-        Args:
-            data (dict): The GeoJSON data.
-            kwargs: Keyword arguments to pass to the GeoJSON layer.
-        """
+        """Adds a GeoJSON layer to the map."""
         import json
 
         if isinstance(data, str):
@@ -154,7 +129,7 @@ class Map(ipyleaflet.Map):
         data = json.loads(gdf.to_json())
         geojson = ipyleaflet.GeoJSON(data=data, **kwargs)
         self.add_layer(geojson)
-        return geojson
+        #return geojson
     
     def add_vector(self, data, **kwargs):
         """Adds a Vector layer to the map."""
@@ -162,9 +137,9 @@ class Map(ipyleaflet.Map):
         import json
         gdf = gpd.read_file(data)
         data = json.loads(gdf.to_json())
-        vector = ipyleaflet.Vector(data=data, **kwargs)
+        vector = ipyleaflet.VectorLayer(data=data, **kwargs)
         self.add_layer(vector)
-        return vector
+        #return vector
 
     def add_raster(self, url, name='Raster', fit_bounds=True, **kwargs):
         import httpx
