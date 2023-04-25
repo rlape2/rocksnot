@@ -2,6 +2,8 @@
 import string
 import random
 import ipyleaflet 
+import ipywidgets as widgets
+from ipyleaflet import WidgetControl
 
 class Map(ipyleaflet.Map):
     
@@ -141,6 +143,8 @@ class Map(ipyleaflet.Map):
         self.add_layer(vector)
         #return vector
 
+
+
     def add_raster(self, url, name='Raster', fit_bounds=True, **kwargs):
         import httpx
         titiler_endpoint = "https://titiler.xyz" 
@@ -174,3 +178,77 @@ class Map(ipyleaflet.Map):
             import localtilesserver
         except ImportError:
             raise ImportError("Please install localtilesserver: pip install localtilesserver")
+        
+
+
+    # def add_raster(self, url, name='Raster', fit_bounds=True, **kwargs):
+    #     """Adds a raster layer to the map.
+    #         Args:
+    #             url (str): The URL of the raster.
+    #             name (str): The name of the raster.
+    #             fit_bounds (bool): Whether to fit the map bounds to the raster.
+    #     """
+    #     import httpx
+
+    #     titiler_endpoint = "https://titiler.xyz" 
+
+    #     r = httpx.get(
+    #         f"{titiler_endpoint}/cog/info",
+    #         params = {
+    #             "url": url,
+    #         }
+    #     ).json()
+
+    #     bounds = r["bounds"]
+
+    #     r = httpx.get(
+    #         f"{titiler_endpoint}/cog/tilejson.json",
+    #         params = {
+    #             "url": url,
+    #         }
+    #     ).json()
+
+    #     tile = r["tiles"][0]
+
+    #     self.add_tile_layer(url=tile, name=name, attribution="raster", **kwargs)
+
+    #     if fit_bounds:
+    #         bbox = [[bounds[1], bounds[0]], [bounds[3], bounds[2]]]
+    #         self.fit_bounds(bbox)
+
+    # def add_local_raster(self, filename, name='Local Raster', **kwargs):
+    #     try:
+    #         import localtilesserver
+    #     except ImportError:
+    #         raise ImportError("Please install localtilesserver: pip install localtilesserver")
+        
+    # def opacity_slider(self, value=0.1, min=0, max=1, position="bottomright"):
+    #     """Adds an opacity slider to the map.
+        
+    #     Args:   
+    #         value (float): The initial value of the slider.
+    #         min (float): The minimum value of the slider.
+    #         max (float): The maximum value of the slider.
+    #         position (str): The position of the slider.
+        
+        
+    #     slider = widgets.FloatSlider(value=value, min=min ,max=max)
+    #     widgets.jslink((self.layers[1], 'opacity'), (slider, 'value'))
+    #     control = WidgetControl(widget=slider, position=position)
+    #     self.add_control(control)
+
+
+    def add_image(self, url, width=100, height=100, position="bottomleft"):
+        """Adds an image to the map.
+        
+        Args:
+            url (str): The URL of the image.
+            width (str): The width of the image.
+            height (str): The height of the image.
+            position (str): The position of the image.
+        """
+
+        widget = widgets.HTML(value=f"<img src={url} width='{width}' height='{height}'>")
+        control = WidgetControl(widget=widget, position = position)
+        self.add_control(control)
+
