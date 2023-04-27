@@ -29,6 +29,11 @@ class Map(ipyleaflet.Map):
         if kwargs["layers_control"]:
             self.add_layers_control()
 
+        if "add_toolbar" not in kwargs:
+            kwargs["add_toolbar"] = True
+        if kwargs["add_toolbar"]:
+            self.add_toolbar()
+
     def add_search_control(self, position="topleft", **kwargs):
         """Adds a search control to the map."""
         if "url" not in kwargs:
@@ -178,6 +183,115 @@ class Map(ipyleaflet.Map):
             import localtilesserver
         except ImportError:
             raise ImportError("Please install localtilesserver: pip install localtilesserver")
+        
+    def add_toolbar(self):
+        widget_width = "250px"
+        padding = "0px 0px 0px 5px"  # upper, right, bottom, left
+
+        toolbar_button = widgets.ToggleButton(
+            value=False,
+            tooltip="Toolbar",
+            icon="wrench",
+            layout=widgets.Layout(width="28px", height="28px", padding=padding),
+        )
+
+        close_button = widgets.ToggleButton(
+            value=False,
+            tooltip="Close the tool",
+            icon="times",
+            button_style="primary",
+            layout=widgets.Layout(height="28px", width="28px", padding=padding),
+        )
+
+        close_button = widgets.ToggleButton(
+            value=False,
+            tooltip="Close the tool",
+            icon="times",
+            button_style="primary",
+            layout=widgets.Layout(height="28px", width="28px", padding=padding),
+        )
+        toolbar = widgets.HBox([toolbar_button])
+
+        def toolbar_click(change):
+            if change["new"]:
+                toolbar.children = [toolbar_button, close_button]
+            else:
+                toolbar.children = [toolbar_button]
+        
+        toolbar_button.observe(toolbar_click, "value")
+
+        def close_click(change):
+            if change["new"]:
+                toolbar_button.close()
+                close_button.close()
+                toolbar.close()
+                
+        close_button.observe(close_click, "value")
+
+        rows = 2
+        cols = 2
+        grid = widgets.GridspecLayout(rows, cols, grid_gap="0px", layout=widgets.Layout(width="65px"))
+
+        icons = ["folder-open", "map", "info", "question"]
+
+        for i in range(rows):
+            for j in range(cols):
+                grid[i, j] = widgets.Button(description="", button_style="primary", icon=icons[i*rows+j], 
+                                            layout=widgets.Layout(width="28px", padding="0px"))
+        grid
+
+        toolbar = widgets.VBox([toolbar_button])
+
+        def toolbar_click(change):
+            if change["new"]:
+                toolbar.children = [widgets.HBox([close_button, toolbar_button]), grid]
+            else:
+                toolbar.children = [toolbar_button]
+                
+        toolbar_button.observe(toolbar_click, "value")
+
+        toolbar_ctrl = WidgetControl(widget=toolbar, position="topright")
+
+        output = widgets.Output()
+        output_ctrl = WidgetControl(widget=output, position="bottomright")
+        self.add_control(output_ctrl)
+
+        basemap = widgets.Dropdown(
+            options=[ "hybrid"],
+            value=None,
+            description="Basemap:",
+            style={"description_width": "initial"},
+            layout=widgets.Layout(width="250px")
+        )
+
+        def change_basemap(change):
+            if change ['new']:
+                with output:
+                    print(basemap)
+                self.add_basemap(basemap.value)
+
+
+        basemap.observe(change_basemap, 'value')
+
+
+        basemap_ctrl = WidgetControl(widget = basemap, position="topright")
+
+        def tool_click(b):    
+             with output:
+                output.clear_output()
+                print(f"You clicked the {b.icon} button")
+
+                if b.icon == 'map':
+                    self.add(basemap_ctrl)
+
+        for i in range(rows):
+            for j in range(cols):
+                tool = grid[i, j]
+                tool.on_click(tool_click)
+
+
+        self.add_control(toolbar_ctrl)
+
         
 
 
