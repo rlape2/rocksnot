@@ -5,6 +5,11 @@ import ipyleaflet
 import ipywidgets as widgets
 from ipyleaflet import WidgetControl
 
+import fastkml
+import simplekml 
+import json
+import shapefile
+
 class Map(ipyleaflet.Map):
     
     def __init__(self, center=(20, 0), zoom=2, **kwargs) -> None:
@@ -292,64 +297,58 @@ class Map(ipyleaflet.Map):
 
         self.add_control(toolbar_ctrl)
 
-        
 
+def convert_geojson_to_shapefile(geojson_file_path, shapefile_file_path):
+    # Load the GeoJSON file into a GeoDataFrame
+    import geopandas as gpd
+    gdf = gpd.read_file(geojson_file_path)
 
-    # def add_raster(self, url, name='Raster', fit_bounds=True, **kwargs):
-    #     """Adds a raster layer to the map.
-    #         Args:
-    #             url (str): The URL of the raster.
-    #             name (str): The name of the raster.
-    #             fit_bounds (bool): Whether to fit the map bounds to the raster.
-    #     """
-    #     import httpx
+    # Save the GeoDataFrame as a Shapefile
+    gdf.to_file(shapefile_file_path, driver='ESRI Shapefile')
 
-    #     titiler_endpoint = "https://titiler.xyz" 
+def convert_shapefile_to_geojson(shapefile_file_path, geojson_file_path):
+    import geopandas as gpd
+    # Load the Shapefile into a GeoDataFrame
+    gdf = gpd.read_file(shapefile_file_path)
 
-    #     r = httpx.get(
-    #         f"{titiler_endpoint}/cog/info",
-    #         params = {
-    #             "url": url,
-    #         }
-    #     ).json()
+    # Save the GeoDataFrame as a GeoJSON file
+    gdf.to_file(geojson_file_path, driver='GeoJSON')
 
-    #     bounds = r["bounds"]
+def convert_geojson_to_kml(geojson_file_path, kml_file_path):
+    # Load the GeoJSON file
+    with open(geojson_file_path) as f:
+        geojson_data = json.load(f)
 
-    #     r = httpx.get(
-    #         f"{titiler_endpoint}/cog/tilejson.json",
-    #         params = {
-    #             "url": url,
-    #         }
-    #     ).json()
+    # Create a KML object
+    kml = simplekml.Kml()
 
-    #     tile = r["tiles"][0]
+    # Iterate over the features in the GeoJSON file
+    for feature in geojson_data['features']:
+        # Create a Placemark for each feature
+        placemark = kml.newpoint(name=feature['properties']['name'],
+                                    coords=[(feature['geometry']['coordinates'][0],
+                                            feature['geometry']['coordinates'][1])])
 
-    #     self.add_tile_layer(url=tile, name=name, attribution="raster", **kwargs)
+    # Write the KML file
+    with open(kml_file_path, 'wb') as f:
+        f.write(kml.kml())
 
-    #     if fit_bounds:
-    #         bbox = [[bounds[1], bounds[0]], [bounds[3], bounds[2]]]
-    #         self.fit_bounds(bbox)
+def convert_shapefile_to_kml(shapefile_file_path, kml_file_path):
+    # Load the Shapefile
+    reader = shapefile.Reader(shapefile_file_path)
 
-    # def add_local_raster(self, filename, name='Local Raster', **kwargs):
-    #     try:
-    #         import localtilesserver
-    #     except ImportError:
-    #         raise ImportError("Please install localtilesserver: pip install localtilesserver")
-        
-    # def opacity_slider(self, value=0.1, min=0, max=1, position="bottomright"):
-    #     """Adds an opacity slider to the map.
-        
-    #     Args:   
-    #         value (float): The initial value of the slider.
-    #         min (float): The minimum value of the slider.
-    #         max (float): The maximum value of the slider.
-    #         position (str): The position of the slider.
-        
-        
-    #     slider = widgets.FloatSlider(value=value, min=min ,max=max)
-    #     widgets.jslink((self.layers[1], 'opacity'), (slider, 'value'))
-    #     control = WidgetControl(widget=slider, position=position)
-    #     self.add_control(control)
+    # Create a KML object
+    kml = simplekml.Kml()
+
+    # Iterate over the shapes in the Shapefile
+    for shape in reader.shapes():
+        # Create a Placemark for each shape
+        placemark = kml.newpoint(name=shape.record[0],
+                                    coords=[(pt[1], pt[0]) for pt in shape.points])
+
+    # Write the KML file
+    with open(kml_file_path, 'wb') as f:
+        f.write(kml.kml())
 
 
     def add_image(self, url, width=100, height=100, position="bottomleft"):
