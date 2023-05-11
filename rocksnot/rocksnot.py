@@ -9,6 +9,12 @@ import fastkml
 import simplekml 
 import json
 import shapefile
+import pandas as pd
+import geopandas as gpd
+import folium
+from folium.plugins import MarkerCluster 
+from ipyfilechooser import FileChooser 
+
 
 class Map(ipyleaflet.Map):
     
@@ -188,7 +194,8 @@ class Map(ipyleaflet.Map):
             import localtilesserver
         except ImportError:
             raise ImportError("Please install localtilesserver: pip install localtilesserver")
-        
+     
+
     def add_toolbar(self):
         widget_width = "250px"
         padding = "0px 0px 0px 5px"  # upper, right, bottom, left
@@ -199,6 +206,20 @@ class Map(ipyleaflet.Map):
             icon="wrench",
             layout=widgets.Layout(width="28px", height="28px", padding=padding),
         )
+
+        file_selector = Text(description='CSV File:', disabled=False)
+    
+    # create a callback function to create the marker cluster from the selected file
+        # def create_marker_cluster(b):
+        #     in_csv = file_selector.value
+        #     if not in_csv:
+        #         print('Please select a CSV file.')
+        #         return
+        #     try:
+        #         df = pd.read_csv(in_csv)
+        #         self.add_marker_cluster(df, x='longitude', y='latitude', label='city')
+        #     except Exception as e:
+        #         print(f'Error: {e}')
 
         close_button = widgets.ToggleButton(
             value=False,
@@ -350,8 +371,69 @@ def convert_shapefile_to_kml(shapefile_file_path, kml_file_path):
     with open(kml_file_path, 'wb') as f:
         f.write(kml.kml())
 
+def csv_to_shp(in_csv, out_shp, x="longitude", y="latitude"):
+    # Read CSV file using pandas
+    df = pd.read_csv(in_csv)
 
-    def add_image(self, url, width=100, height=100, position="bottomleft"):
+    # Convert to geopandas dataframe
+    gdf = gpd.GeoDataFrame(
+        df, geometry=gpd.points_from_xy(df[x], df[y]), crs="EPSG:4326"
+    )
+
+    # Write to shapefile
+    gdf.to_file(out_shp)
+
+def csv_to_geojson(in_csv, out_geojson, x="longitude", y="latitude"):
+    # Read CSV file using pandas
+    df = pd.read_csv(in_csv)
+
+    # Convert to geopandas dataframe
+    gdf = gpd.GeoDataFrame(
+        df, geometry=gpd.points_from_xy(df[x], df[y]), crs="EPSG:4326"
+    )
+
+    # Write to GeoJSON
+    gdf.to_file(out_geojson, driver="GeoJSON")
+
+def add_points_from_csv(self, in_csv, x="longitude", y="latitude", label=None, layer_name="Marker cluster"):
+        # Read CSV file using pandas
+    df = pd.read_csv(in_csv)
+
+        # Create a marker cluster layer
+    marker_cluster = MarkerCluster(name=layer_name)
+
+        # Add each point to the marker cluster layer
+    for _, row in df.iterrows():
+        popup = None
+        if label:
+            popup = str(row[label])
+        folium.Marker(location=[row[y], row[x]], popup=popup).add_to(marker_cluster)
+
+        # Add the marker cluster layer to the map
+    marker_cluster.add_to(self)
+
+folium.Map.add_points_from_csv = add_points_from_csv 
+
+def add_marker_cluster(m, data, x='longitude', y='latitude', label=None, layer_name='Marker cluster'):
+    markers = folium.MarkerCluster(name=layer_name)
+    for idx, row in data.iterrows():
+        popup = None if label is None else folium.Popup(str(row[label]), max_width=250)
+        folium.Marker(location=[row[y], row[x]], popup=popup).add_to(markers)
+    markers.add_to(m)
+    folium.LayerControl().add_to(m)
+
+# define function to handle file selection and map display
+def on_file_select(change):
+    if change['type'] == 'change' and change['name'] == 'value':
+        filepath = file_selector.selected
+        if filepath is not None:
+            data = pd.read_csv(filepath)
+            m = folium.Map(location=[data['latitude'].mean(), data['longitude'].mean()], zoom_start=4)
+            add_marker_cluster(m, data)
+            display(m)
+
+
+def add_image(self, url, width=100, height=100, position="bottomleft"):
         """Adds an image to the map.
         
         Args:
